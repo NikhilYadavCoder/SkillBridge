@@ -1,5 +1,6 @@
 using System.Text.Json;
 using SkillBridge.DTOs.Job;
+using SkillBridge.DTOs.Resume;
 
 namespace SkillBridge.Services.Job
 {
@@ -18,19 +19,85 @@ namespace SkillBridge.Services.Job
                 throw new ArgumentException("Role is required", nameof(role));
             }
 
-            // Normalize user skills (lowercase + trim) and remove duplicates
-            var normalizedUserSkills = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            if (userSkills != null)
+            var normalizedUserSkills = NormalizeUserSkills(userSkills);
+            var filteredJobs = await LoadJobsForRoleAsync(role);
+
+            return BuildAnalysisResult(filteredJobs, normalizedUserSkills, role, pageNumber, pageSize);
+        }
+
+        public async Task<JobAnalysisResponseDto> AnalyzeFromResumeAsync(
+            ResumeParsedDto resumeData,
+            string resumeText,
+            string role,
+            int pageNumber,
+            int pageSize)
+        {
+            if (string.IsNullOrWhiteSpace(role))
             {
-                foreach (var skill in userSkills)
+                throw new ArgumentException("Role is required", nameof(role));
+            }
+
+            resumeData ??= new ResumeParsedDto();
+
+            // STEP 1: load jobs for role
+            var filteredJobs = await LoadJobsForRoleAsync(role);
+
+            // STEP 2: master job skill set
+            var masterJobSkills = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var job in filteredJobs)
+            {
+                if (job.skills == null) continue;
+                foreach (var skill in job.skills)
                 {
                     if (!string.IsNullOrWhiteSpace(skill))
+                    {
+                        masterJobSkills.Add(skill.Trim());
+                    }
+                }
+            }
+
+            // STEP 3: extract user skills from parsed skills + resume text scan
+            var normalizedUserSkills = NormalizeUserSkills(resumeData.skills);
+
+            if (!string.IsNullOrWhiteSpace(resumeText) && masterJobSkills.Count > 0)
+            {
+                var text = resumeText;
+                foreach (var skill in masterJobSkills)
+                {
+                    if (string.IsNullOrWhiteSpace(skill)) continue;
+
+                    if (text.IndexOf(skill, StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         normalizedUserSkills.Add(skill.Trim().ToLowerInvariant());
                     }
                 }
             }
 
+            // STEP 4–7: reuse core matching logic
+            return BuildAnalysisResult(filteredJobs, normalizedUserSkills, role, pageNumber, pageSize);
+        }
+
+        private static HashSet<string> NormalizeUserSkills(List<string>? userSkills)
+        {
+            var normalizedUserSkills = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            if (userSkills == null)
+            {
+                return normalizedUserSkills;
+            }
+
+            foreach (var skill in userSkills)
+            {
+                if (!string.IsNullOrWhiteSpace(skill))
+                {
+                    normalizedUserSkills.Add(skill.Trim().ToLowerInvariant());
+                }
+            }
+
+            return normalizedUserSkills;
+        }
+
+        private async Task<List<JobItem>> LoadJobsForRoleAsync(string role)
+        {
             // Read and deserialize jobs.json
             var jobsPath = Path.Combine(AppContext.BaseDirectory, JobsFileRelativePath);
             if (!File.Exists(jobsPath))
@@ -50,11 +117,19 @@ namespace SkillBridge.Services.Job
                 PropertyNameCaseInsensitive = true
             }) ?? new JobsConfig();
 
-            var filteredJobs = jobsConfig.jobs
+            return jobsConfig.jobs
                 .Where(j => !string.IsNullOrWhiteSpace(j.role) &&
                             j.role.Equals(role, StringComparison.OrdinalIgnoreCase))
                 .ToList();
+        }
 
+        private JobAnalysisResponseDto BuildAnalysisResult(
+            List<JobItem> filteredJobs,
+            HashSet<string> normalizedUserSkills,
+            string role,
+            int pageNumber,
+            int pageSize)
+        {
             var allVariantResults = new List<JobVariantResultDto>();
             var aggregatedMissingCount = new Dictionary<string, (int Count, string Canonical)>(StringComparer.OrdinalIgnoreCase);
 
