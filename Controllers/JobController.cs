@@ -17,15 +17,18 @@ namespace SkillBridge.Controllers
         private readonly IUserProfileService _userProfileService;
         private readonly IJobAnalysisService _jobAnalysisService;
         private readonly IRoadmapService _roadmapService;
+        private readonly IInterviewService _interviewService;
 
         public JobController(
             IUserProfileService userProfileService,
             IJobAnalysisService jobAnalysisService,
-            IRoadmapService roadmapService)
+            IRoadmapService roadmapService,
+            IInterviewService interviewService)
         {
             _userProfileService = userProfileService;
             _jobAnalysisService = jobAnalysisService;
             _roadmapService = roadmapService;
+            _interviewService = interviewService;
         }
 
         private int GetCurrentUserId()
@@ -97,6 +100,13 @@ namespace SkillBridge.Controllers
         public async Task<IActionResult> GenerateRoadmap([FromBody] List<string> skills)
         {
             var result = await _roadmapService.GenerateRoadmapAsync(skills ?? new List<string>());
+            return Ok(result);
+        }
+
+        [HttpPost("interview")]
+        public async Task<IActionResult> GenerateInterview([FromBody] List<string> skills)
+        {
+            var result = await _interviewService.GenerateQuestionsAsync(skills ?? new List<string>());
             return Ok(result);
         }
     }

@@ -65,6 +65,7 @@ builder.Services.AddScoped<IJobAnalysisService, JobAnalysisService>();
 // Add AI Services
 builder.Services.AddHttpClient<IGroqService, GroqService>();
 builder.Services.AddScoped<IRoadmapService, RoadmapService>();
+builder.Services.AddScoped<IInterviewService, InterviewService>();
 
 // Configure JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"];

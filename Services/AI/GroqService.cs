@@ -17,6 +17,49 @@ namespace SkillBridge.Services.AI
             _configuration = configuration;
         }
 
+        public async Task<string> GenerateAsync(string prompt)
+        {
+            try
+            {
+                var apiKey = _configuration["Groq:ApiKey"];
+                if (string.IsNullOrEmpty(apiKey) || apiKey == "your-groq-api-key-here")
+                {
+                    return string.Empty;
+                }
+
+                var request = new GroqRequest
+                {
+                    model = "llama-3.1-8b-instant",
+                    messages = new List<Message>
+                    {
+                        new Message { role = "user", content = prompt }
+                    },
+                    temperature = 0.2
+                };
+
+                var requestBody = JsonSerializer.Serialize(request);
+                var content = new StringContent(requestBody, Encoding.UTF8, "application/json");
+
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+
+                var response = await _httpClient.PostAsync("https://api.groq.com/openai/v1/chat/completions", content);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return string.Empty;
+                }
+
+                var responseString = await response.Content.ReadAsStringAsync();
+                var groqResponse = JsonSerializer.Deserialize<GroqResponse>(responseString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                return groqResponse?.choices?.FirstOrDefault()?.message?.content ?? string.Empty;
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
         public async Task<ResumeParsedDto> ExtractResumeDataAsync(string resumeText)
         {
             try
