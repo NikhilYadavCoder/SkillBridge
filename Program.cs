@@ -5,10 +5,8 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using SkillBridge.Data;
 using SkillBridge.Services.Auth;
-using SkillBridge.Services.Profile;
-using SkillBridge.Services.Resume;
 using SkillBridge.Services.AI;
-using SkillBridge.Services.Job;
+using SkillBridge.Services.Resume;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,14 +54,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // Add Authentication Services
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IUserProfileService, UserProfileService>();
 builder.Services.AddScoped<IResumeService, ResumeService>();
 
 // Add AI Services
-builder.Services.AddHttpClient<IGeminiService, GeminiService>();  // Implements IGeminiService with Groq backend
-
-// Add Job Analysis Services
-builder.Services.AddScoped<IJobAnalysisService, JobAnalysisService>();
+builder.Services.AddHttpClient<IGroqService, GroqService>();
 
 // Configure JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"];
