@@ -7,6 +7,8 @@ using SkillBridge.Data;
 using SkillBridge.Services.Auth;
 using SkillBridge.Services.AI;
 using SkillBridge.Services.Resume;
+using SkillBridge.Services.Job;
+using SkillBridge.Services.Profile;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -55,6 +57,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Add Authentication Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IResumeService, ResumeService>();
+builder.Services.AddScoped<IUserProfileService, UserProfileService>();
+
+// Add Job Analysis Service
+builder.Services.AddScoped<IJobAnalysisService, JobAnalysisService>();
 
 // Add AI Services
 builder.Services.AddHttpClient<IGroqService, GroqService>();

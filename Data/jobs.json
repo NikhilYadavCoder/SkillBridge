@@ -1,0 +1,104 @@
+{
+  "jobs": [
+    {
+      "role": "Backend Developer",
+      "variant": "ASP.NET Backend Developer",
+      "skills": ["C#", "ASP.NET", ".NET", "SQL Server", "REST API", "Entity Framework", "LINQ", "JWT", "Microservices"]
+    },
+    {
+      "role": "Backend Developer",
+      "variant": "Django Backend Developer",
+      "skills": ["Python", "Django", "Django REST", "PostgreSQL", "REST API", "ORM", "JWT", "Celery"]
+    },
+    {
+      "role": "Backend Developer",
+      "variant": "Spring Boot Developer",
+      "skills": ["Java", "Spring Boot", "Spring Security", "MySQL", "REST API", "Hibernate", "Microservices"]
+    },
+    {
+      "role": "Frontend Developer",
+      "variant": "React Developer",
+      "skills": ["React", "JavaScript", "TypeScript", "HTML", "CSS", "Redux", "Hooks", "API Integration"]
+    },
+    {
+      "role": "Frontend Developer",
+      "variant": "Angular Developer",
+      "skills": ["Angular", "TypeScript", "RxJS", "HTML", "CSS", "NgRx", "API Integration"]
+    },
+    {
+      "role": "Frontend Developer",
+      "variant": "Vue Developer",
+      "skills": ["Vue", "JavaScript", "Vuex", "HTML", "CSS", "API Integration"]
+    },
+    {
+      "role": "Full Stack Developer",
+      "variant": "MERN Stack Developer",
+      "skills": ["MongoDB", "Express", "React", "Node.js", "JWT", "REST API", "Redux"]
+    },
+    {
+      "role": "Full Stack Developer",
+      "variant": "MEAN Stack Developer",
+      "skills": ["MongoDB", "Express", "Angular", "Node.js", "JWT", "REST API"]
+    },
+    {
+      "role": "Full Stack Developer",
+      "variant": ".NET Full Stack Developer",
+      "skills": ["C#", "ASP.NET", "React", "SQL Server", "Entity Framework", "REST API", "JWT"]
+    },
+    {
+      "role": "Cloud Engineer",
+      "variant": "AWS Cloud Engineer",
+      "skills": ["AWS", "EC2", "S3", "Lambda", "Docker", "CI/CD", "CloudFormation"]
+    },
+    {
+      "role": "Cloud Engineer",
+      "variant": "Azure Cloud Engineer",
+      "skills": ["Azure", "VM", "Blob Storage", "Functions", "Docker", "CI/CD"]
+    },
+    {
+      "role": "Cloud Engineer",
+      "variant": "GCP Cloud Engineer",
+      "skills": ["GCP", "Compute Engine", "Kubernetes", "Docker", "Cloud Functions"]
+    },
+    {
+      "role": "DevOps Engineer",
+      "variant": "CI/CD DevOps Engineer",
+      "skills": ["CI/CD", "Jenkins", "Docker", "Kubernetes", "Git", "Linux"]
+    },
+    {
+      "role": "DevOps Engineer",
+      "variant": "AWS DevOps Engineer",
+      "skills": ["AWS", "Docker", "Kubernetes", "Terraform", "CI/CD", "Linux"]
+    },
+    {
+      "role": "Data Scientist",
+      "variant": "Machine Learning Engineer",
+      "skills": ["Python", "Scikit-learn", "Pandas", "NumPy", "Model Training", "Feature Engineering"]
+    },
+    {
+      "role": "Data Scientist",
+      "variant": "Deep Learning Engineer",
+      "skills": ["Python", "TensorFlow", "PyTorch", "CNN", "Deep Learning"]
+    },
+    {
+      "role": "Data Scientist",
+      "variant": "NLP Engineer",
+      "skills": ["Python", "NLP", "Transformers", "BERT", "Text Processing"]
+    },
+    {
+      "role": "Mobile Developer",
+      "variant": "Android Developer",
+      "skills": ["Java", "Kotlin", "Android SDK", "REST API", "Firebase"]
+    },
+    {
+      "role": "Mobile Developer",
+      "variant": "Flutter Developer",
+      "skills": ["Flutter", "Dart", "REST API", "Firebase"]
+    },
+    {
+      "role": "QA Engineer",
+      "variant": "Automation Tester",
+      "skills": ["Selenium", "Java", "TestNG", "JUnit", "Automation Testing"]
+    }
+  ]
+}
