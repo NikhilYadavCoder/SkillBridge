@@ -172,7 +172,7 @@ namespace SkillBridge.Services.AI
             return new ResumeParsedDto
             {
                 skills = new(),
-                experience = new() { "No experience available" },
+                experience = new(),
                 education = new(),
                 projects = new(),
                 certifications = new() { "No certifications available" }
@@ -435,9 +435,13 @@ namespace SkillBridge.Services.AI
             var experienceIndex = textUpper.IndexOf("WORK EXPERIENCE");
             if (experienceIndex == -1)
                 experienceIndex = textUpper.IndexOf("EXPERIENCE");
+
+            // Also handle common variants like INTERNSHIP sections
+            if (experienceIndex == -1)
+                experienceIndex = textUpper.IndexOf("INTERNSHIP");
             
             if (experienceIndex == -1)
-                return new() { "No experience available" };
+                return new();
 
             // Get text until next section
             var nextSectionIndex = FindNextSectionIndex(textUpper, experienceIndex + 1);
@@ -474,7 +478,7 @@ namespace SkillBridge.Services.AI
                 }
             }
 
-            return experience.Count > 0 ? experience : new() { "No experience available" };
+            return experience;
         }
 
         private List<string> ExtractEducation(string resumeText)
@@ -482,7 +486,15 @@ namespace SkillBridge.Services.AI
             var education = new List<string>();
             var textUpper = resumeText.ToUpper();
             
+            // Look for several common education section headers
             var educationIndex = textUpper.IndexOf("EDUCATION");
+            if (educationIndex == -1)
+                educationIndex = textUpper.IndexOf("ACADEMIC DETAILS");
+            if (educationIndex == -1)
+                educationIndex = textUpper.IndexOf("ACADEMICS");
+            if (educationIndex == -1)
+                educationIndex = textUpper.IndexOf("QUALIFICATIONS");
+
             if (educationIndex == -1)
                 return education;
 
@@ -503,8 +515,16 @@ namespace SkillBridge.Services.AI
                     .Replace("*", "")
                     .Trim();
 
-                if (cleaned.Equals("EDUCATION", StringComparison.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(cleaned))
+                if (string.IsNullOrWhiteSpace(cleaned))
                     continue;
+
+                // Strip leading EDUCATION keyword if it's glued to the rest of the line
+                if (cleaned.StartsWith("EDUCATION", StringComparison.OrdinalIgnoreCase))
+                {
+                    cleaned = cleaned.Substring("EDUCATION".Length).Trim();
+                    if (string.IsNullOrWhiteSpace(cleaned))
+                        continue;
+                }
 
                 // Look for degree keywords
                 var hasDegreeKeyword = ContainsAny(cleaned, new[] { 
@@ -519,15 +539,22 @@ namespace SkillBridge.Services.AI
                     cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\b\d{4}\b", "");
                     cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"–\s*\d{4}", "");
                     
-                    // Remove CGPA/GPA
-                    cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"CGPA:\s*\d+\.?\d*", "");
-                    cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"GPA:\s*\d+\.?\d*", "");
-                    cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"CGPA\s*\d+\.?\d*", "");
+                    // Remove CGPA/GPA (including forms like "GPA 8.68/10.00")
+                    cleaned = System.Text.RegularExpressions.Regex.Replace(
+                        cleaned,
+                        @"(CGPA|GPA)[:\s]*\d+(\.\d+)?(/\d+(\.\d+)?)?",
+                        string.Empty,
+                        System.Text.RegularExpressions.RegexOptions.IgnoreCase);
                     
                     // Remove coursework and other metadata
                     cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"Coursework:.*?(?=,|$)", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                    
-                    // Normalize multiple spaces
+
+                    // Insert spaces between letters and digits if they are glued together
+                    // e.g. "Technology2022" -> "Technology 2022"
+                    cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"(?<=[A-Za-z])(?=\d)", " ");
+                    cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"(?<=\d)(?=[A-Za-z])", " ");
+
+                    // Normalize multiple spaces again after adjustments
                     cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\s+", " ");
                     cleaned = cleaned.Trim();
 
@@ -567,7 +594,14 @@ namespace SkillBridge.Services.AI
             var projects = new List<string>();
             var textUpper = resumeText.ToUpper();
             
+            // Try several common project section headers
             var projectsIndex = textUpper.IndexOf("PROJECTS");
+            if (projectsIndex == -1)
+                projectsIndex = textUpper.IndexOf("PROJECT");
+            if (projectsIndex == -1)
+                projectsIndex = textUpper.IndexOf("PERSONAL PROJECTS");
+            if (projectsIndex == -1)
+                projectsIndex = textUpper.IndexOf("ACADEMIC PROJECTS");
             if (projectsIndex == -1)
                 return projects;
 

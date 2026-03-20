@@ -96,7 +96,29 @@ namespace SkillBridge.Services.Job
             return normalizedUserSkills;
         }
 
+        public async Task<List<string>> GetAvailableRolesAsync()
+        {
+            var jobsConfig = await LoadJobsConfigAsync();
+
+            return jobsConfig.jobs
+                .Where(j => !string.IsNullOrWhiteSpace(j.role))
+                .Select(j => j.role.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(r => r, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
         private async Task<List<JobItem>> LoadJobsForRoleAsync(string role)
+        {
+            var jobsConfig = await LoadJobsConfigAsync();
+
+            return jobsConfig.jobs
+                .Where(j => !string.IsNullOrWhiteSpace(j.role) &&
+                            j.role.Equals(role, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        private async Task<JobsConfig> LoadJobsConfigAsync()
         {
             // Read and deserialize jobs.json
             var jobsPath = Path.Combine(AppContext.BaseDirectory, JobsFileRelativePath);
@@ -117,10 +139,7 @@ namespace SkillBridge.Services.Job
                 PropertyNameCaseInsensitive = true
             }) ?? new JobsConfig();
 
-            return jobsConfig.jobs
-                .Where(j => !string.IsNullOrWhiteSpace(j.role) &&
-                            j.role.Equals(role, StringComparison.OrdinalIgnoreCase))
-                .ToList();
+            return jobsConfig;
         }
 
         private JobAnalysisResponseDto BuildAnalysisResult(
@@ -131,7 +150,6 @@ namespace SkillBridge.Services.Job
             int pageSize)
         {
             var allVariantResults = new List<JobVariantResultDto>();
-            var aggregatedMissingCount = new Dictionary<string, (int Count, string Canonical)>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var job in filteredJobs)
             {
@@ -157,15 +175,6 @@ namespace SkillBridge.Services.Job
                     else
                     {
                         missing.Add(trimmedSkill);
-
-                        if (aggregatedMissingCount.TryGetValue(normalizedSkill, out var existing))
-                        {
-                            aggregatedMissingCount[normalizedSkill] = (existing.Count + 1, existing.Canonical);
-                        }
-                        else
-                        {
-                            aggregatedMissingCount[normalizedSkill] = (1, trimmedSkill);
-                        }
                     }
                 }
 
@@ -188,13 +197,6 @@ namespace SkillBridge.Services.Job
                 allVariantResults.Add(variantResult);
             }
 
-            // Order aggregated missing skills by frequency (descending) then name
-            var aggregatedMissingSkills = aggregatedMissingCount
-                .OrderByDescending(kvp => kvp.Value.Count)
-                .ThenBy(kvp => kvp.Value.Canonical, StringComparer.OrdinalIgnoreCase)
-                .Select(kvp => kvp.Value.Canonical)
-                .ToList();
-
             // Pagination
             if (pageNumber < 1)
             {
@@ -215,8 +217,7 @@ namespace SkillBridge.Services.Job
             return new JobAnalysisResponseDto
             {
                 Role = role,
-                Results = pagedResults,
-                AggregatedMissingSkills = aggregatedMissingSkills
+                Results = pagedResults
             };
         }
 

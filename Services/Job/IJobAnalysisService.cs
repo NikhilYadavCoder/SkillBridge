@@ -17,5 +17,7 @@ namespace SkillBridge.Services.Job
             string role,
             int pageNumber,
             int pageSize);
+
+        Task<List<string>> GetAvailableRolesAsync();
     }
 }

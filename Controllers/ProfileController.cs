@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SkillBridge.DTOs.Profile;
@@ -41,7 +42,71 @@ namespace SkillBridge.Controllers
                     return NotFound(new { message = "Profile not found" });
                 }
 
-                return Ok(profile);
+                var skills = new List<string>();
+                var education = new List<string>();
+                var projects = new List<string>();
+                var experience = new List<string>();
+                if (!string.IsNullOrWhiteSpace(profile.Skills))
+                {
+                    try
+                    {
+                        var deserialised = JsonSerializer.Deserialize<List<string>>(profile.Skills);
+                        if (deserialised != null)
+                        {
+                            skills = deserialised;
+                        }
+                    }
+                    catch { }
+                }
+
+                if (!string.IsNullOrWhiteSpace(profile.Education))
+                {
+                    try
+                    {
+                        var deserialised = JsonSerializer.Deserialize<List<string>>(profile.Education);
+                        if (deserialised != null)
+                        {
+                            education = deserialised;
+                        }
+                    }
+                    catch { }
+                }
+
+                if (!string.IsNullOrWhiteSpace(profile.Projects))
+                {
+                    try
+                    {
+                        var deserialised = JsonSerializer.Deserialize<List<string>>(profile.Projects);
+                        if (deserialised != null)
+                        {
+                            projects = deserialised;
+                        }
+                    }
+                    catch { }
+                }
+
+                if (!string.IsNullOrWhiteSpace(profile.Experience))
+                {
+                    try
+                    {
+                        var deserialised = JsonSerializer.Deserialize<List<string>>(profile.Experience);
+                        if (deserialised != null)
+                        {
+                            experience = deserialised;
+                        }
+                    }
+                    catch { }
+                }
+
+                return Ok(new
+                {
+                    name = profile.User?.Name ?? string.Empty,
+                    email = profile.User?.Email ?? string.Empty,
+                    skills,
+                    education,
+                    projects,
+                    experience
+                });
             }
             catch (UnauthorizedAccessException ex)
             {
@@ -76,7 +141,7 @@ namespace SkillBridge.Controllers
             }
         }
 
-        [HttpPut]
+        [HttpPut("update")]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateSkillsDto dto)
         {
             if (!ModelState.IsValid)

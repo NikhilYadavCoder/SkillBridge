@@ -31,6 +31,14 @@ namespace SkillBridge.Controllers
             _interviewService = interviewService;
         }
 
+        [HttpGet("roles")]
+        [Authorize]
+        public async Task<IActionResult> GetRoles()
+        {
+            var roles = await _jobAnalysisService.GetAvailableRolesAsync();
+            return Ok(roles);
+        }
+
         private int GetCurrentUserId()
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -78,7 +86,31 @@ namespace SkillBridge.Controllers
                     request.PageNumber,
                     request.PageSize);
 
-                return Ok(result);
+                // For each variant, generate its own roadmap and interview questions
+                foreach (var variant in result.Results)
+                {
+                    var variantMissing = variant.MissingSkills ?? new List<string>();
+                    var variantMatched = variant.MatchedSkills ?? new List<string>();
+
+                    variant.Roadmap = await _roadmapService.GenerateRoadmapAsync(variantMissing);
+                    variant.InterviewQuestions = await _interviewService.GenerateQuestionsAsync(variantMatched);
+                }
+
+                var response = new
+                {
+                    role = result.Role,
+                    variants = result.Results.Select(v => new
+                    {
+                        variant = v.Variant,
+                        matchedSkills = v.MatchedSkills,
+                        missingSkills = v.MissingSkills,
+                        matchPercentage = v.MatchPercentage,
+                        roadmap = v.Roadmap,
+                        interviewQuestions = v.InterviewQuestions
+                    }).ToList()
+                };
+
+                return Ok(response);
             }
             catch (UnauthorizedAccessException ex)
             {

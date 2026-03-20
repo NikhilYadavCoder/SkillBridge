@@ -17,6 +17,7 @@ namespace SkillBridge.Services.Profile
         public async Task<UserProfile?> GetProfileAsync(int userId)
         {
             return await _context.UserProfiles
+                .Include(up => up.User)
                 .FirstOrDefaultAsync(up => up.UserId == userId);
         }
 
