@@ -1,7 +1,7 @@
 # Stage 1: Copy pre-built frontend (dist folder already built locally)
 FROM alpine:latest AS frontend-copy
 WORKDIR /app
-COPY Frontend/dist ./dist
+COPY ../Frontend/dist ./dist
 
 # Stage 2: Build backend
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS backend-build
