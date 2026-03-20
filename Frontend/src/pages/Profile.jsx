@@ -28,7 +28,7 @@ function Profile() {
       try {
         const token = localStorage.getItem('token')
 
-        const res = await axios.get('https://localhost:7275/api/profile', {
+        const res = await api.get('/api/profile', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
