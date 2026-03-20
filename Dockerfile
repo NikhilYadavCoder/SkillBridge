@@ -1,14 +1,14 @@
 # Stage 1: Copy pre-built frontend (dist folder already built locally)
 FROM alpine:latest AS frontend-copy
 WORKDIR /app
-COPY SkillBridge/Frontend/dist ./dist
+COPY Frontend/dist ./dist
 
 # Stage 2: Build backend
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS backend-build
 WORKDIR /src
-COPY SkillBridge/SkillBridge.csproj ./
+COPY SkillBridge.csproj ./
 RUN dotnet restore "SkillBridge.csproj"
-COPY SkillBridge/ .
+COPY . .
 RUN dotnet build "SkillBridge.csproj" -c Release -o /app/build
 
 # Stage 3: Publish backend
