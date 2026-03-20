@@ -1,16 +1,7 @@
-# Stage 1: Build frontend
-FROM node:18-alpine AS frontend-build
-WORKDIR /app/frontend
-# Copy package files
-COPY Frontend/package.json Frontend/package-lock.json ./
-# Install dependencies with clean install (uses package-lock.json)
-RUN npm ci --prefer-offline --no-audit --verbose
-# Copy source code
-COPY Frontend/ .
-# List files for debugging
-RUN ls -la && echo "=== Building frontend ===" 
-# Build with verbose output
-RUN npm run build --verbose 2>&1
+# Stage 1: Copy pre-built frontend (dist folder already built locally)
+FROM alpine:latest AS frontend-copy
+WORKDIR /app
+COPY Frontend/dist ./dist
 
 # Stage 2: Build backend
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS backend-build
@@ -31,9 +22,9 @@ WORKDIR /app
 # Copy published backend
 COPY --from=publish /app/publish .
 
-# Copy frontend dist files to wwwroot
+# Copy pre-built frontend dist files to wwwroot
 RUN mkdir -p wwwroot
-COPY --from=frontend-build /app/frontend/dist ./wwwroot
+COPY --from=frontend-copy /app/dist ./wwwroot
 
 # Environment
 ENV ASPNETCORE_URLS=http://+:${PORT:-8080}
