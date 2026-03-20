@@ -116,10 +116,11 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    // Also serve static files in development for testing
+    app.UseDefaultFiles();
+    app.UseStaticFiles();
 }
-
-// In development we serve HTTP directly for the SPA on 5173
-if (!app.Environment.IsDevelopment())
+else
 {
     app.UseHttpsRedirection();
     // Serve static files from wwwroot (frontend dist)
