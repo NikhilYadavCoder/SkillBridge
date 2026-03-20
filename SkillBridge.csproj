@@ -25,4 +25,12 @@
     <PackageReference Include="UglyToad.PdfPig" Version="1.7.0-custom-5" />
   </ItemGroup>
 
+  <!-- Copy frontend dist to wwwroot before publish -->
+  <Target Name="CopyFrontend" BeforeTargets="Build">
+    <ItemGroup>
+      <FrontendFiles Include="Frontend/dist/**/*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(FrontendFiles)" DestinationFolder="wwwroot/%(RecursiveDir)" SkipUnchangedFiles="true" />
+  </Target>
+
 </Project>
