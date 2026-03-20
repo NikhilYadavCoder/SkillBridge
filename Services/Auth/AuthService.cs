@@ -44,7 +44,7 @@ namespace SkillBridge.Services.Auth
             {
                 Name = dto.Name,
                 Email = dto.Email,
-                DateOfBirth = dto.DateOfBirth,
+                DateOfBirth = dto.DateOfBirth.HasValue ? DateTime.SpecifyKind(dto.DateOfBirth.Value, DateTimeKind.Utc) : null,
                 Gender = dto.Gender,
                 Contact = dto.Contact,
                 PasswordHash = passwordHash,
