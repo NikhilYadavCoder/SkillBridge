@@ -23,9 +23,16 @@ if (File.Exists("appsettings.local.json"))
 
 builder.Services.AddCors(options =>
 {
+    var frontendUrls = new[] 
+    { 
+        "http://localhost:5173", 
+        "http://localhost:5174",
+        builder.Configuration["FrontendUrl"] ?? "" // For production Render frontend URL
+    }.Where(url => !string.IsNullOrEmpty(url)).ToArray();
+
     options.AddPolicy("FrontendCors", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "http://localhost:5174")
+        policy.WithOrigins(frontendUrls)
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
