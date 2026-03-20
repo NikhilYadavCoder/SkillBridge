@@ -122,6 +122,9 @@ if (app.Environment.IsDevelopment())
 if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
+    // Serve static files from wwwroot (frontend dist)
+    app.UseDefaultFiles();
+    app.UseStaticFiles();
 }
 
 app.UseCors("FrontendCors");
