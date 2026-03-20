@@ -123,7 +123,12 @@ function Profile() {
       }
 
       await api.put('/api/profile/update', payload)
-      setProfile(payload)
+      setProfile((prev) => ({
+        ...(prev || {}),
+        name: draft.name,
+        email: draft.email,
+        skills: draft.skills || [],
+      }))
       setEditing(false)
     } catch {
       setError('Unable to save profile changes.')
@@ -220,6 +225,9 @@ function Profile() {
           These are skills extracted from your resume. You can adjust them if
           something is missing.
         </p>
+        <p className="mt-2 text-[11px] text-slate-500">
+          Total skills: <span className="font-semibold text-slate-700">{(draft.skills || []).length}</span>
+        </p>
         <div className="mt-4 flex flex-wrap gap-2">
           {(draft.skills || []).length === 0 && (
             <p className="text-xs text-slate-500">No skills added yet.</p>
@@ -263,12 +271,6 @@ function Profile() {
         )}
       </Card>
 
-      {/* Debug: show raw profile data in development */}
-      {import.meta.env.DEV && profile && (
-        <pre className="mt-4 rounded-lg bg-slate-50 p-3 text-[10px] text-slate-500 overflow-x-auto">
-          {JSON.stringify(profile, null, 2)}
-        </pre>
-      )}
     </div>
   )
 }

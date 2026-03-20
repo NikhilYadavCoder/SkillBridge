@@ -155,7 +155,17 @@ namespace SkillBridge.Services.AI
                     cleanedJson = cleanedJson.Trim();
 
                     var parsedData = JsonSerializer.Deserialize<ResumeParsedDto>(cleanedJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                    return parsedData ?? ExtractFromResumeText(resumeText);
+
+                    if (parsedData == null)
+                    {
+                        return ExtractFromResumeText(resumeText);
+                    }
+
+                    // Strengthen skills: merge AI-parsed skills with deterministic extractor
+                    var deterministic = ExtractFromResumeText(resumeText);
+                    parsedData.skills = MergeAndNormalizeSkills(parsedData.skills, deterministic.skills);
+
+                    return parsedData;
                 }
 
                 return ExtractFromResumeText(resumeText);
@@ -249,6 +259,7 @@ namespace SkillBridge.Services.AI
                 // Backend / Frameworks
                 "ASP.NET", "ASP.NET Core", ".NET", "Node.js", "Express", "Django", "Flask", "Spring",
                 "Spring Boot", "Spring Cloud", "Fastapi", "Rails", "Laravel", "Symfony",
+                "Entity Framework", "LINQ",
                 
                 // Databases
                 "SQL", "MySQL", "PostgreSQL", "MongoDB", "Redis", "SQLite", "SQL Server", "Oracle",
@@ -262,8 +273,8 @@ namespace SkillBridge.Services.AI
                 "Git", "GitHub", "GitLab", "Bitbucket", "SVN",
                 
                 // Tools / Libraries
-                "GraphQL", "REST", "RESTful API", "Microservices", "SOAP", "JSON", "XML",
-                "JWT", "OAuth", "LDAP", "OpenSSL",
+                "GraphQL", "REST", "RESTful API", "REST API", "Microservices", "SOAP", "JSON", "XML",
+                "JWT", "OAuth", "LDAP", "OpenSSL", "API Integration", "Hooks",
                 
                 // Testing / Quality
                 "JUnit", "Pytest", "Jest", "Mocha", "Selenium", "Cypress", "TestNG",
@@ -331,6 +342,31 @@ namespace SkillBridge.Services.AI
             foreach (var word in nonTechWords)
             {
                 skills.Remove(word);
+            }
+
+            // Global scan across entire resume text for any known skills
+            var fullTextUpper = resumeText?.ToUpperInvariant() ?? string.Empty;
+            foreach (var tech in validTechSkills)
+            {
+                if (string.IsNullOrWhiteSpace(tech)) continue;
+
+                if (fullTextUpper.Contains(tech.ToUpperInvariant()))
+                {
+                    skills.Add(tech);
+                }
+            }
+
+            // Additional phrase-based mappings for APIs, version control, etc.
+            var fullTextLower = resumeText?.ToLowerInvariant() ?? string.Empty;
+
+            if (fullTextLower.Contains("web api") || fullTextLower.Contains("api development") || fullTextLower.Contains("rest api"))
+            {
+                skills.Add("REST API");
+            }
+
+            if (fullTextLower.Contains("version control") || fullTextLower.Contains("source control"))
+            {
+                skills.Add("Git");
             }
 
             return skills.ToList();
@@ -414,10 +450,45 @@ namespace SkillBridge.Services.AI
             tech = System.Text.RegularExpressions.Regex.Replace(tech, @"C\+\+", "C++", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
             tech = System.Text.RegularExpressions.Regex.Replace(tech, @"C#|Csharp", "C#", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
+            // Normalize common API and version control phrases
+            tech = System.Text.RegularExpressions.Regex.Replace(tech, @"RESTful API", "REST API", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            tech = System.Text.RegularExpressions.Regex.Replace(tech, @"Web API(s)?", "REST API", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+            if (tech.Equals("Version Control", StringComparison.OrdinalIgnoreCase) ||
+                tech.Equals("Source Control", StringComparison.OrdinalIgnoreCase))
+            {
+                tech = "Git";
+            }
+
             // Remove trailing punctuation
             tech = System.Text.RegularExpressions.Regex.Replace(tech, @"[,\.\;:!?]+$", "");
 
             return tech.Trim();
+        }
+
+        private List<string> MergeAndNormalizeSkills(List<string>? primary, List<string>? fallback)
+        {
+            var merged = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            void AddRange(List<string>? source)
+            {
+                if (source == null) return;
+
+                foreach (var skill in source)
+                {
+                    if (string.IsNullOrWhiteSpace(skill)) continue;
+                    var normalized = NormalizeTechName(skill);
+                    if (!string.IsNullOrWhiteSpace(normalized))
+                    {
+                        merged.Add(normalized);
+                    }
+                }
+            }
+
+            AddRange(primary);
+            AddRange(fallback);
+
+            return merged.ToList();
         }
 
         private bool ContainsManyCapitals(string text)
